@@ -1,4 +1,4 @@
-# Podspecpush
+# Orientepodspecpush
 
 Tired of linting, checking, pushing your cocoapod spec? No more! Once you are satisified with your pod, simply increment and push the tag. No changes to .podspec required, the tooling will update this for you!
 
@@ -43,7 +43,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/jcarroll-mediafly/podspecpush.
+Bug reports and pull requests are welcome on GitHub at https://github.com/johnWang06/orientepodspecpush.
 
 
 ## License
