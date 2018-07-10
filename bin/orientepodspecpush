@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require "podspecpush"
+
+podpush = Podspecpush::PodPush.new
+podpush.push
