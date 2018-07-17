@@ -178,6 +178,7 @@ module Orientepodspecpush
 
     def push
       opts = Trollop::options do
+        version "#{Orientepodspecpush::VERSION}"
         opt :specRepo, "Name of the repo to push to. See pod repo list for available repos", :type => :string
         opt :workspace, "Path to cocoapod workspace", :type => :string
         opt :sources, "Comma delimited list of private repo sources to consider when linting private repo. Master is included by default so private repos can source master", :type => :string
