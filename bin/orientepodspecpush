@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "podspecpush"
+require "orientepodspecpush"
 
-podpush = Podspecpush::PodPush.new
+podpush = Orientepodspecpush::PodPush.new
 podpush.push
