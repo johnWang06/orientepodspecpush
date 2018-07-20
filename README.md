@@ -1,6 +1,8 @@
 # Orientepodspecpush
 111111
 
+hotfix
+
 Tired of linting, checking, pushing your cocoapod spec? No more! Once you are satisified with your pod, simply increment and push the tag. No changes to .podspec required, the tooling will update this for you!
 
 You can then publish your next version by running `orientepodspecpush --specRepo <reponame>`!
