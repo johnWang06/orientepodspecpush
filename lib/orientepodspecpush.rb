@@ -2,6 +2,49 @@ require "orientepodspecpush/version"
 require 'colorize'
 require 'trollop'
 
+# def test
+#   opts = Trollop::options do
+#     version "#{Orientepodspecpush::VERSION}"
+#     opt :specRepo, "Name of the repo to push to. See pod repo list for available repos", :type => :string
+#     opt :workspace, "Path to cocoapod workspace", :type => :string
+#     opt :sources, "Comma delimited list of private repo sources to consider when linting private repo. Master is included by default so private repos can source master", :type => :string
+#     opt :private, "If set, assume the cocoapod is private and skip public checks"
+#     opt :tag, "tag of the repo push to", :type => :string
+#     opt :tagCommitMsg, "commit message of this tag", :type => :string
+#     opt :lint, "pod spec lint 情况下所需要的参数，需要用引号括起来，例如'--allow-warnings --sources=some source address'",:type => :string
+#     opt :package, "pod package  情况下所需要的参数，需要用引号括起来，例如'--force --no-mangle'",:type => :string
+#     opt :push, "pod repo push 情况下所需要的参数，需要用引号括起来，例如'--verbose --use-libraries'",:type => :string
+#     opt :noPackage, "If set, no need to package"
+#   end
+
+#   puts "lint:#{opts[:lint]}"
+#   puts "package:#{opts[:package]}"
+#   puts "push:#{opts[:push]}"
+#   puts "noPackage:#{opts[:noPackage]}"
+#   puts "tag:#{opts[:tag]}"
+
+#   if opts[:specRepo] == nil
+#     puts '空'
+#     else
+# puts '非空'
+#   end
+#   # Need these two
+#   Trollop::die :specRepo, "Spec Repo must be provided" if opts[:specRepo] == nil
+#   Trollop::die :workspace, "Workspace path must be provided" if opts[:workspace] == nil
+#   Trollop::die :tag, "tag must be provided" if opts[:tag] == nil
+# end
+
+# test
+
+# def test
+#   cmd = []
+#   cmd << "wo"
+#   cmd << ["ai","si"]
+#   cmd << "ni"
+#   puts cmd.join "--"
+# end
+
+# test
 module Orientepodspecpush
   class PodPush
 
@@ -26,7 +69,13 @@ module Orientepodspecpush
       cmd << ['bundle exec'] if shouldUseBundleExec
       podPackage = "pod package #{specfile}"
       cmd << [podPackage]
-      cmd << opts[:package] unless opts[:package] == nil
+      packageCmd = "--force --spec-sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs, https://github.com/CocoaPods/Specs.git'"
+      if opts[:package] == nil
+        cmd << packageCmd
+      else
+        cmd << opts[:package]
+      end
+      
       
       system cmd.join(' ')
 
@@ -69,11 +118,19 @@ module Orientepodspecpush
 
       # Build lintCmd
       lintCmd << specfile
-      # lintCmd << sourcesArg
-      lintCmd << opts[:sources] unless opts[:sources] == nil
-      lintCmd <<  ["#{opts[:lint]}"]
-      lintCmd << ["--private"] unless opts[:private] == false
 
+      lintCommand = "--allow-warnings --sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs,https://github.com/CocoaPods/Specs.git'"
+      if opts[:lint] == nil
+        lintCmd <<  [lintCommand]
+      else
+        lintCmd <<  ["#{opts[:lint]}"]
+      end
+      
+      # lintCmd << sourcesArg
+      # lintCmd << opts[:sources] unless opts[:sources] == nil
+      
+      lintCmd << ["--private"] unless opts[:private] == false
+      
       # finalize
       lintCmd.join(' ')
     end
@@ -81,9 +138,22 @@ module Orientepodspecpush
     def makePushCmd(opts)
       cmd = []
       cmd << ['bundle exec'] if shouldUseBundleExec
-      podRepoPush = "pod repo push #{opts[:specRepo]} #{specfile}"
-      cmd << [podRepoPush]
-      cmd << opts[:push] unless opts[:push] == nil      
+      if opts[:specRepo] == nil
+        podRepoPush = "pod repo push OrienteSpecs #{specfile}"
+      else 
+        podRepoPush = "pod repo push #{opts[:specRepo]} #{specfile}"
+      end
+      
+      # cmd << [podRepoPush]
+      cmd << podRepoPush
+      pushCommand = "--allow-warnings --sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs,https://github.com/CocoaPods/Specs.git'"
+      if opts[:push] == nil
+        cmd << pushCommand
+      else
+        cmd << opts[:push]
+        
+      end
+      # cmd << opts[:push] unless opts[:push] == nil      
 
       cmd.join(' ')
     end
@@ -100,13 +170,25 @@ module Orientepodspecpush
 #
 # @podVersion = opts[:tag]
 # @podVersionMessage = opts[:tagCommitMsg]
+      flag = true
       if @podVersionMessage == nil
-        system "git tag -a #{@podVersion} -m 'add new tag'"
+       flag = system "git tag -a #{@podVersion} -m 'add new tag'"
       else
-        system "git tag -a #{@podVersion} -m '#{@podVersionMessage}'"
+       flag = system "git tag -a #{@podVersion} -m '#{@podVersionMessage}'"
       end
+      if flag == false
+        puts "tag 已经存在"
+        exit
+      end
+
       # system "git tag -a #{@podVersion} -m '#{@podVersionMessage}'"
-      system "git push --tags"
+      flag = system "git push --tags"
+      if flag == false
+        system "git tag -d #{@podVersion}"
+        puts "远程推送tag 失败"
+        exit
+        
+      end
 
       contents = File.read(specfile)
       oldVersion = Regexp.new('[0-9.]{2,8}').match(Regexp.new('(s.version)\s*=.*\n').match(contents).to_s).to_s
@@ -191,13 +273,13 @@ module Orientepodspecpush
         opt :noPackage, "If set, no need to package"
       end
 
-      puts "lint:#{opts[:lint]}"
-      puts "package:#{opts[:package]}"
-      puts "push:#{opts[:push]}"
-      puts "noPackage:#{opts[:noPackage]}"
-      puts "tag:#{opts[:tag]}"
+      # puts "lint:#{opts[:lint]}"
+      # puts "package:#{opts[:package]}"
+      # puts "push:#{opts[:push]}"
+      # puts "noPackage:#{opts[:noPackage]}"
+      # puts "tag:#{opts[:tag]}"
       # Need these two
-      Trollop::die :specRepo, "Spec Repo must be provided" if opts[:specRepo] == nil
+      # Trollop::die :specRepo, "Spec Repo must be provided" if opts[:specRepo] == nil
       Trollop::die :workspace, "Workspace path must be provided" if opts[:workspace] == nil
       Trollop::die :tag, "tag must be provided" if opts[:tag] == nil
 
