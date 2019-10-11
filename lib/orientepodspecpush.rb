@@ -69,7 +69,7 @@ module Orientepodspecpush
       cmd << ['bundle exec'] if shouldUseBundleExec
       podPackage = "pod package #{specfile}"
       cmd << [podPackage]
-      packageCmd = "--force --spec-sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs, https://github.com/CocoaPods/Specs.git'"
+      packageCmd = "--force --spec-sources='git@git.oriente.com:iOS/ios-orientespecs.git, https://github.com/CocoaPods/Specs.git'"
       if opts[:package] == nil
         cmd << packageCmd
       else
@@ -119,7 +119,7 @@ module Orientepodspecpush
       # Build lintCmd
       lintCmd << specfile
 
-      lintCommand = "--allow-warnings --sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs,https://github.com/CocoaPods/Specs.git'"
+      lintCommand = "--allow-warnings --sources='git@git.oriente.com:iOS/ios-orientespecs.git,https://github.com/CocoaPods/Specs.git'"
       if opts[:lint] == nil
         lintCmd <<  [lintCommand]
       else
@@ -146,7 +146,7 @@ module Orientepodspecpush
       
       # cmd << [podRepoPush]
       cmd << podRepoPush
-      pushCommand = "--allow-warnings --sources='ssh://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/ios-OrienteSpecs,https://github.com/CocoaPods/Specs.git'"
+      pushCommand = "--allow-warnings --commit-message='feat: update spec' --sources='git@git.oriente.com:iOS/ios-orientespecs.git,https://github.com/CocoaPods/Specs.git'"
       if opts[:push] == nil
         cmd << pushCommand
       else
@@ -172,12 +172,12 @@ module Orientepodspecpush
 # @podVersionMessage = opts[:tagCommitMsg]
       flag = true
       if @podVersionMessage == nil
-       flag = system "git tag -a #{@podVersion} -m 'add new tag'"
+       flag = system "git tag -a #{@podVersion} -m 'feat: add new tag'"
       else
-       flag = system "git tag -a #{@podVersion} -m '#{@podVersionMessage}'"
+       flag = system "git tag -a #{@podVersion} -m 'feat: #{@podVersionMessage}'"
       end
       if flag == false
-        puts "tag 已经存在"
+        puts "tag 已经存在".red
         exit
       end
 
@@ -185,14 +185,26 @@ module Orientepodspecpush
       flag = system "git push --tags"
       if flag == false
         system "git tag -d #{@podVersion}"
-        puts "远程推送tag 失败"
+        puts "远程推送tag 失败".red
         exit
         
       end
 
       contents = File.read(specfile)
-      oldVersion = Regexp.new('[0-9.]{2,8}').match(Regexp.new('(s.version)\s*=.*\n').match(contents).to_s).to_s
-      File.write(specfile, contents.sub!(oldVersion, @podVersion))
+      # oldVersion = Regexp.new('[0-9.]{2,8}').match(Regexp.new('(s.version)\s*=.*\n').match(contents).to_s).to_s
+      # File.write(specfile, contents.sub!(oldVersion, @podVersion))
+
+     
+
+
+      oldVersion = Regexp.new('(.version)\s*=.*\n').match(contents).to_s
+      oldVersionCopy = oldVersion.clone
+      preStr ="'"
+      sufStr ="'"
+      entireStr = preStr + @podVersion + sufStr
+      nVersion = oldVersion.sub!(/'.*'$/, "#{entireStr}")   
+
+     File.write(specfile, contents.sub!(oldVersionCopy, nVersion))
       
 #      cmd = []
 #      cmd << ['bundle exec'] if shouldUseBundleExec
@@ -254,7 +266,7 @@ module Orientepodspecpush
       system "git add ."
       puts "Congrats! The pod has been linted and successfully push to the spec repo! All that is left is to commit the podspec here!".green
 
-      puts "Could not commit files, consider finishing by hand by performing a git commit and push. Your spec repo should be up to date".red unless system('git commit -am "[Versioning] Updating podspec"') == true
+      puts "Could not commit files, consider finishing by hand by performing a git commit and push. Your spec repo should be up to date".red unless system('git commit -am "feat: Updating podspec"') == true
       puts "Could not push to server, consider finishing by hand by performing a git push. Your spec repo should be up to date".red unless system('git push origin master')
     end
 
